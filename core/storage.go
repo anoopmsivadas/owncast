@@ -2,7 +2,6 @@ package core
 
 import (
 	"github.com/gabek/owncast/config"
-	"github.com/gabek/owncast/core/playlist"
 	"github.com/gabek/owncast/core/storageproviders"
 )
 
@@ -21,7 +20,7 @@ func setupStorage() error {
 			return err
 		}
 
-		go playlist.StartVideoContentMonitor(_storage)
+		// go playlist.StartVideoContentMonitor(_storage)
 	}
 
 	return nil

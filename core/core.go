@@ -11,14 +11,15 @@ import (
 	"github.com/gabek/owncast/config"
 	"github.com/gabek/owncast/core/chat"
 	"github.com/gabek/owncast/core/ffmpeg"
+	"github.com/gabek/owncast/core/storageproviders"
 	"github.com/gabek/owncast/models"
 	"github.com/gabek/owncast/utils"
 )
 
 var (
-	_stats        *models.Stats
-	_storage      models.ChunkStorageProvider
-	_cleanupTimer *time.Timer
+	_stats      *models.Stats
+	_storage    models.StorageProvider
+	_transcoder *ffmpeg.Transcoder
 )
 
 //Start starts up the core processing
@@ -38,6 +39,12 @@ func Start() error {
 	if err := createInitialOfflineState(); err != nil {
 		log.Error("failed to create the initial offline state")
 		return err
+	}
+
+	if config.Config.S3.Enabled {
+		_storage = &storageproviders.S3Storage{}
+	} else {
+		_storage = &storageproviders.LocalStorage{}
 	}
 
 	chat.Setup(ChatListenerImpl{})
@@ -102,4 +109,37 @@ func resetDirectories() {
 		os.MkdirAll(path.Join(config.Config.GetPrivateHLSSavePath(), strconv.Itoa(0)), 0777)
 		os.MkdirAll(path.Join(config.Config.GetPublicHLSSavePath(), strconv.Itoa(0)), 0777)
 	}
+}
+
+//SetStreamAsConnected sets the stream as connected
+func SetStreamAsConnected() {
+	_stats.StreamConnected = true
+	_stats.LastConnectTime = utils.NullTime{time.Now(), true}
+	_stats.LastDisconnectTime = utils.NullTime{time.Now(), false}
+
+	timeSinceDisconnect := time.Since(_stats.LastDisconnectTime.Time).Minutes()
+	if timeSinceDisconnect > 15 {
+		_stats.SessionMaxViewerCount = 0
+	}
+
+	chunkPath := config.Config.GetPrivateHLSSavePath()
+	// if usingExternalStorage {
+	// 	chunkPath = config.Config.GetPrivateHLSSavePath()
+	// }
+
+	go func() {
+		_transcoder = ffmpeg.NewTranscoder()
+		progress := _transcoder.Start()
+
+		ffmpeg.StartTranscoderMonitor(progress, _storage)
+	}()
+	ffmpeg.StartThumbnailGenerator(chunkPath, config.Config.VideoSettings.HighestQualityStreamIndex)
+}
+
+//SetStreamAsDisconnected sets the stream as disconnected
+func SetStreamAsDisconnected() {
+	_stats.StreamConnected = false
+	_stats.LastDisconnectTime = utils.NullTime{time.Now(), true}
+
+	ffmpeg.ShowStreamOfflineState()
 }
