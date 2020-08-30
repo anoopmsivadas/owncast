@@ -49,7 +49,6 @@ type videoSettings struct {
 	ChunkLengthInSeconds      int             `yaml:"chunkLengthInSeconds"`
 	StreamingKey              string          `yaml:"streamingKey"`
 	StreamQualities           []StreamQuality `yaml:"streamQualities"`
-	OfflineContent            string          `yaml:"offlineContent"`
 	HighestQualityStreamIndex int             `yaml"-"`
 }
 
@@ -170,15 +169,6 @@ func (c *config) GetMaxNumberOfReferencedSegmentsInPlaylist() int {
 	}
 
 	return _default.GetMaxNumberOfReferencedSegmentsInPlaylist()
-}
-
-func (c *config) GetOfflineContentPath() string {
-	if c.VideoSettings.OfflineContent != "" {
-		return c.VideoSettings.OfflineContent
-	}
-
-	// This is relative to the webroot, not the project root.
-	return _default.VideoSettings.OfflineContent
 }
 
 func (c *config) GetFFMpegPath() string {

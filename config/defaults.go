@@ -1,9 +1,10 @@
 package config
 
 import (
-	"log"
 	"os/exec"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func getDefaults() config {
@@ -14,7 +15,6 @@ func getDefaults() config {
 	defaults.Files.MaxNumberInPlaylist = 5
 	defaults.PublicHLSPath = "webroot/hls"
 	defaults.PrivateHLSPath = "hls"
-	defaults.VideoSettings.OfflineContent = "static/offline.m4v"
 	defaults.InstanceDetails.ExtraInfoFile = "/static/content.md"
 
 	defaultQuality := StreamQuality{
