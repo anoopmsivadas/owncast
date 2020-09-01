@@ -115,7 +115,6 @@ func handleDisconnect(conn net.Conn) {
 	conn.Close()
 	_pipe.Close()
 	_isConnected = false
-	//_transcoder.Stop()
 }
 
 //IsConnected gets whether there is an rtmp connection or not
