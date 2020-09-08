@@ -3,6 +3,7 @@ package core
 import (
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 
 	log "github.com/sirupsen/logrus"
@@ -79,6 +80,9 @@ func transitionToOfflineVideoStreamContent() {
 	_transcoder.SetSegmentLength(10)
 	_transcoder.SetInput(offlineFilePath)
 	_transcoder.Start()
+
+	// Copy the logo to be the thumbnail
+	utils.Copy(filepath.Join("webroot", config.Config.InstanceDetails.Logo["large"]), "webroot/thumbnail.jpg")
 }
 
 func resetDirectories() {
@@ -90,9 +94,6 @@ func resetDirectories() {
 	os.MkdirAll(config.Config.GetPublicHLSSavePath(), 0777)
 	os.MkdirAll(config.Config.GetPrivateHLSSavePath(), 0777)
 
-	// Remove the previous thumbnail
-	os.Remove("webroot/thumbnail.jpg")
-
 	// Create private hls data dirs
 	if len(config.Config.VideoSettings.StreamQualities) != 0 {
 		for index := range config.Config.VideoSettings.StreamQualities {
@@ -103,4 +104,7 @@ func resetDirectories() {
 		os.MkdirAll(path.Join(config.Config.GetPrivateHLSSavePath(), strconv.Itoa(0)), 0777)
 		os.MkdirAll(path.Join(config.Config.GetPublicHLSSavePath(), strconv.Itoa(0)), 0777)
 	}
+
+	// Remove the previous thumbnail
+	utils.Copy(config.Config.InstanceDetails.Logo["large"], "webroot/thumbnail.jpg")
 }
