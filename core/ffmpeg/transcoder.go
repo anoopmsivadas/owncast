@@ -24,6 +24,7 @@ type Transcoder struct {
 	segmentLengthSeconds int
 	appendToStream       bool
 	ffmpegPath           string
+	internalListenerPort int
 	TranscoderCompleted  func(error)
 }
 
@@ -97,7 +98,16 @@ func (t *Transcoder) Start() {
 }
 
 func (t *Transcoder) getString() string {
-	localListenerAddress := "http://127.0.0.1:" + strconv.Itoa(config.Config.GetPublicWebServerPort()+1)
+	var port int
+	if config.Config != nil {
+		port = config.Config.GetPublicWebServerPort() + 1
+	} else if t.internalListenerPort != 0 {
+		port = t.internalListenerPort
+	} else {
+		log.Panicln("A internal port must be set for transcoder callback")
+	}
+
+	localListenerAddress := "http://127.0.0.1:" + strconv.Itoa(port)
 
 	hlsOptionFlags := []string{}
 
@@ -363,4 +373,8 @@ func (t *Transcoder) SetSegmentLength(seconds int) {
 // SetAppendToStream enables appending to the HLS stream instead of overwriting
 func (t *Transcoder) SetAppendToStream(append bool) {
 	t.appendToStream = append
+}
+
+func (t *Transcoder) SetInternalHTTPPort(port int) {
+	t.internalListenerPort = port
 }
