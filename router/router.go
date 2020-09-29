@@ -46,6 +46,9 @@ func Start() error {
 
 	// Authenticated admin requests
 
+	// Current inbound broadcaster
+	http.HandleFunc("/api/admin/broadcaster", middleware.RequireAdminAuth(controllers.GetInboundBroadasterDetails))
+
 	// Disconnect inbound stream
 	http.HandleFunc("/api/admin/disconnect", middleware.RequireAdminAuth(controllers.DisconnectInboundConnection))
 
