@@ -19,6 +19,7 @@ var (
 	_stats        *models.Stats
 	_storage      models.ChunkStorageProvider
 	_cleanupTimer *time.Timer
+	_broadcaster  *models.Broadcaster
 )
 
 //Start starts up the core processing
