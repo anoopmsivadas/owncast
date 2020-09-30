@@ -49,6 +49,9 @@ func Start() error {
 	// Disconnect inbound stream
 	http.HandleFunc("/api/admin/disconnect", middleware.RequireAdminAuth(controllers.DisconnectInboundConnection))
 
+	// Server config
+	http.HandleFunc("/api/admin/serverconfig", middleware.RequireAdminAuth(controllers.GetServerConfig))
+
 	port := config.Config.GetPublicWebServerPort()
 
 	log.Infof("Web server running on port: %d", port)
