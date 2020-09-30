@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -16,6 +15,7 @@ import (
 
 	"github.com/gabek/owncast/config"
 	"github.com/gabek/owncast/core/playlist"
+	"github.com/gabek/owncast/utils"
 
 	"github.com/grafov/m3u8"
 )
@@ -67,12 +67,9 @@ func (s *S3Storage) Setup() error {
 
 // SegmentWritten is called when a single segment of video is written
 func (s *S3Storage) SegmentWritten(localFilePath string) {
-	// Time how long it took to save a segment of video
-	// for debugging.
-	var timestamp time.Time
-	if config.Config.EnableDebugFeatures {
-		timestamp = time.Now()
-	}
+	index := utils.GetIndexFromFilePath(localFilePath)
+	performanceMonitorKey := "s3upload-" + index
+	utils.StartPerformanceMonitor(performanceMonitorKey)
 
 	// Upload the segment
 	_, error := s.Save(localFilePath, 0)
@@ -80,17 +77,14 @@ func (s *S3Storage) SegmentWritten(localFilePath string) {
 		log.Errorln(error)
 		return
 	}
+	averagePerformance := utils.GetAveragePerformance(performanceMonitorKey)
 
-	// If debugging warn the user about long-running save operations
-	if !timestamp.IsZero() {
-		delta := time.Now().Sub(timestamp)
-		var logFunction func(args ...interface{})
-		if delta.Seconds() > float64(config.Config.GetVideoSegmentSecondsLength())*0.9 {
-			logFunction = log.Warnln
-		} else {
-			logFunction = log.Traceln
+	// Warn the user about long-running save operations
+	if averagePerformance != 0 {
+		if averagePerformance > float64(config.Config.GetVideoSegmentSecondsLength())*0.9 {
+			log.Warnln("Average upload S3 save duration", averagePerformance, "ms")
 		}
-		logFunction("S3 save", localFilePath, ":", delta.Milliseconds(), "ms")
+		log.Traceln(localFilePath, "uploaded to S3")
 	}
 
 	// Upload the variant playlist for this segment
