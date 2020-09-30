@@ -49,6 +49,9 @@ func Start() error {
 	// Disconnect inbound stream
 	http.HandleFunc("/api/admin/disconnect", middleware.RequireAdminAuth(controllers.DisconnectInboundConnection))
 
+	// Get viewer count over time
+	http.HandleFunc("/api/admin/viewersOverTime", middleware.RequireAdminAuth(controllers.GetViewersOverTime))
+
 	port := config.Config.GetPublicWebServerPort()
 
 	log.Infof("Web server running on port: %d", port)
